@@ -1,7 +1,7 @@
 package main
 
 import (
-	"LetsGO_API/api"
+	"MusiGoHall_API/api"
 	"fmt"
 	"github.com/gorilla/mux"
 	"log"
@@ -13,9 +13,13 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/search", api.SearchRelease).Methods("POST")
-	router.HandleFunc("/search/{type}/{name}", api.ComplexSearch).Methods("GET")
-	router.HandleFunc("/artist/{id}", api.GetArtistById).Methods("GET")
+	router.HandleFunc("/search/release/{value}", api.SearchRelease).Methods("GET")
+	//router.HandleFunc("/search/artist/{value}", api.SearchArtist).Methods("GET")
+	router.HandleFunc("/search/label/{value}", api.SearchLabel).Methods("GET")
+
+	router.HandleFunc("/release/{id}", api.GetRelease).Methods("GET")
+	router.HandleFunc("/artist/{id}", api.GetArtist).Methods("GET")
+	router.HandleFunc("/label/{id}", api.GetLabel).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":3333", router))
 }
