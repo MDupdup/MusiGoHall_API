@@ -38,6 +38,42 @@ type Artist struct {
 	ID          int         `json:"id"`
 }
 
+type Release struct {
+	Style      []string `json:"style"`
+	MasterID   int      `json:"master_id"`
+	Thumb      string   `json:"thumb"`
+	Format     []string `json:"format"`
+	Country    string   `json:"country"`
+	Barcode    []string `json:"barcode"`
+	URI        string   `json:"uri"`
+	MasterURL  string   `json:"master_url"`
+	Label      []string `json:"label"`
+	CoverImage string   `json:"cover_image"`
+	Catno      string   `json:"catno"`
+	Community  struct {
+		Have int `json:"have"`
+		Want int `json:"want"`
+	} `json:"community"`
+	Year        string   `json:"year"`
+	Genre       []string `json:"genre"`
+	Title       string   `json:"title"`
+	ResourceURL string   `json:"resource_url"`
+	Type        string   `json:"type"`
+	ID          int      `json:"id"`
+}
+
+type Label struct {
+	Thumb       string      `json:"thumb"`
+	Title       string      `json:"title"`
+	URI         string      `json:"uri"`
+	MasterURL   interface{} `json:"master_url"`
+	CoverImage  string      `json:"cover_image"`
+	ResourceURL string      `json:"resource_url"`
+	MasterID    interface{} `json:"master_id"`
+	Type        string      `json:"type"`
+	ID          int         `json:"id"`
+}
+
 type Result struct {
 	Pagination struct {
 		PerPage int `json:"per_page"`

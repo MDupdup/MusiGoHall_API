@@ -13,7 +13,8 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/search/{type}/{name}", api.SearchArtist).Methods("GET")
+	router.HandleFunc("/search", api.SearchRelease).Methods("POST")
+	router.HandleFunc("/search/{type}/{name}", api.ComplexSearch).Methods("GET")
 	router.HandleFunc("/artist/{id}", api.GetArtistById).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":3333", router))
