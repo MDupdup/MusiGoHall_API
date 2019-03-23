@@ -19,7 +19,7 @@ func GetRelease(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 
 	fmt.Println(params["type"], ":", params["name"])
-	url := fmt.Sprintf("%s/artists/%s", baseUrl, params["id"])
+	url := fmt.Sprintf("%s/releases/%s", baseUrl, params["id"])
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -34,13 +34,13 @@ func GetRelease(w http.ResponseWriter, req *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	var artist models.Release
+	var release models.Release
 
-	if err := json.NewDecoder(resp.Body).Decode(&artist); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
 		log.Println(err)
 	}
 
-	err = json.NewEncoder(w).Encode(artist)
+	err = json.NewEncoder(w).Encode(release)
 	if err != nil {
 		log.Fatal("jsonEncode:", err)
 	}
@@ -108,7 +108,7 @@ func GetLabel(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func SearchRelease(w http.ResponseWriter, req *http.Request) {
+/*func SearchRelease(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 
 	url := fmt.Sprintf("%s/database/search?q=%s&type=release&key=%s&secret=%s", baseUrl, params["name"], key, secret)
@@ -140,21 +140,93 @@ func SearchRelease(w http.ResponseWriter, req *http.Request) {
 	gresult := gjson.Get(bodyString, "results")
 	for _, result := range gresult.Array() {
 
-		println(result.Array())
+		println(result.Get("style").IsArray())
+
+		var style, format, barcode, label, genre []string
+
+		for _, result := range result.Get("style").Array() {
+			style = append(style, result.Str)
+		}
+		for _, result := range result.Get("format").Array() {
+			format = append(format, result.Str)
+		}
+		for _, result := range result.Get("barcode").Array() {
+			barcode = append(barcode, result.Str)
+		}
+		for _, result := range result.Get("label").Array() {
+			label = append(label, result.Str)
+		}
+		for _, result := range result.Get("genre").Array() {
+			genre = append(genre, result.Str)
+		}
 
 		releases = append(releases, models.Release{
-			Style: []result.,
-			MasterID: int(result.Get("master_id").Num),
-			Thumb: result.Get("thumb").Str,
-			Format: nil,
-			Country: result.Get("country").Str,
-			Barcode: nil,
-			URI: result.Get("uri").Str,
-			MasterURL: result.Get("master_url").Str,
-				})
+				Style: style,
+				MasterID: int(result.Get("master_id").Num),
+				Thumb: result.Get("thumb").Str,
+				Format: format,
+				Country: result.Get("country").Str,
+				Barcode: barcode,
+				URI: result.Get("uri").Str,
+				MasterURL: result.Get("master_url").Str,
+				Label: label,
+				CoverImage: result.Get("cover_image").Str,
+				Catno: result.Get("catno").Str,
+				Year: result.Get("year").Str,
+				Genre: genre,
+				Title: result.Get("title").Str,
+				ResourceURL: result.Get("resource_url").Str,
+				ID: int(result.Get("id").Num),
+			})
 	}
 
 	err = json.NewEncoder(w).Encode(releases)
+	if err != nil {
+		log.Fatal("jsonEncode:", err)
+		return
+	}
+}*/
+
+func SearchArtist(w http.ResponseWriter, req *http.Request) {
+	params := mux.Vars(req)
+
+	url := fmt.Sprintf("%s/database/search?q=%s&type=artist&key=%s&secret=%s", baseUrl, params["name"], key, secret)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Fatal("NewRequest:", err)
+		return
+	}
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal("Do:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	bodyString := string(body)
+
+	var result models.Result
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		log.Println(err)
+	}
+
+	var artists []models.Artist
+	gresult := gjson.Get(bodyString, "results")
+	for _, result := range gresult.Array() {
+		artists = append(artists, models.Artist{
+			ID:         int(result.Get("id").Num),
+			Title:      result.Get("title").Str,
+			URI:        result.Get("uri").Str,
+			CoverImage: result.Get("cover_image").Str,
+		})
+	}
+
+	err = json.NewEncoder(w).Encode(artists)
 	if err != nil {
 		log.Fatal("jsonEncode:", err)
 		return

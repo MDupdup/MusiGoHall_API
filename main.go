@@ -13,8 +13,8 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/search/release/{value}", api.SearchRelease).Methods("GET")
-	//router.HandleFunc("/search/artist/{value}", api.SearchArtist).Methods("GET")
+	//router.HandleFunc("/search/release/{value}", api.SearchRelease).Methods("GET")
+	router.HandleFunc("/search/artist/{value}", api.SearchArtist).Methods("GET")
 	router.HandleFunc("/search/label/{value}", api.SearchLabel).Methods("GET")
 
 	router.HandleFunc("/release/{id}", api.GetRelease).Methods("GET")
