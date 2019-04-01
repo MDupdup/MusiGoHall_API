@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	. "net/url"
 )
 
 var baseUrl = "https://api.discogs.com"
@@ -108,7 +109,7 @@ func GetLabel(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-/*func SearchRelease(w http.ResponseWriter, req *http.Request) {
+func SearchRelease(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 
 	url := fmt.Sprintf("%s/database/search?q=%s&type=release&key=%s&secret=%s", baseUrl, params["name"], key, secret)
@@ -161,23 +162,16 @@ func GetLabel(w http.ResponseWriter, req *http.Request) {
 		}
 
 		releases = append(releases, models.Release{
-				Style: style,
-				MasterID: int(result.Get("master_id").Num),
-				Thumb: result.Get("thumb").Str,
-				Format: format,
-				Country: result.Get("country").Str,
-				Barcode: barcode,
-				URI: result.Get("uri").Str,
-				MasterURL: result.Get("master_url").Str,
-				Label: label,
-				CoverImage: result.Get("cover_image").Str,
-				Catno: result.Get("catno").Str,
-				Year: result.Get("year").Str,
-				Genre: genre,
-				Title: result.Get("title").Str,
-				ResourceURL: result.Get("resource_url").Str,
-				ID: int(result.Get("id").Num),
-			})
+			MasterID:    int(result.Get("master_id").Num),
+			Thumb:       result.Get("thumb").Str,
+			Country:     result.Get("country").Str,
+			URI:         result.Get("uri").Str,
+			MasterURL:   result.Get("master_url").Str,
+			Year:        int(result.Get("year").Num),
+			Title:       result.Get("title").Str,
+			ResourceURL: result.Get("resource_url").Str,
+			ID:          int(result.Get("id").Num),
+		})
 	}
 
 	err = json.NewEncoder(w).Encode(releases)
@@ -185,14 +179,21 @@ func GetLabel(w http.ResponseWriter, req *http.Request) {
 		log.Fatal("jsonEncode:", err)
 		return
 	}
-}*/
+}
 
 func SearchArtist(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 
-	url := fmt.Sprintf("%s/database/search?q=%s&type=artist&key=%s&secret=%s", baseUrl, params["name"], key, secret)
+	fmt.Printf("get artist: [%s]", params["value"])
 
-	req, err := http.NewRequest("GET", url, nil)
+	parameter, err := Parse(QueryEscape(params["value"]))
+	if err != nil {
+		panic(err)
+	}
+
+	url := fmt.Sprintf("%s/database/search?q=%s&type=artist&key=%s&secret=%s", baseUrl, parameter.String(), key, secret)
+
+	req, err = http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Fatal("NewRequest:", err)
 		return
