@@ -15,11 +15,9 @@ func main() {
 
 	router.HandleFunc("/search/release/{value}", api.SearchRelease).Methods("GET")
 	router.HandleFunc("/search/artist/{value}", api.SearchArtist).Methods("GET")
-	router.HandleFunc("/search/label/{value}", api.SearchLabel).Methods("GET")
 
 	router.HandleFunc("/release/{id}", api.GetRelease).Methods("GET")
 	router.HandleFunc("/artist/{id}", api.GetArtist).Methods("GET")
-	router.HandleFunc("/label/{id}", api.GetLabel).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":3333", router))
 }
