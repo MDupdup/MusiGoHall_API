@@ -46,4 +46,6 @@ type Result struct {
 	URI        string `json:"uri"`
 	CoverImage string `json:"cover_image"`
 	ID         int    `json:"id"`
+	Year       string
+	Style      []string
 }

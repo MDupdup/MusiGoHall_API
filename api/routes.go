@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	. "net/url"
+	"regexp"
 )
 
 var baseUrl = "https://api.discogs.com"
@@ -164,7 +165,7 @@ Search for releases by value
 func SearchRelease(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 
-	url := fmt.Sprintf("%s/database/search?q=%s&type=release&key=%s&secret=%s", baseUrl, params["value"], key, secret)
+	url := fmt.Sprintf("%s/database/search?q=%s&type=master&key=%s&secret=%s", baseUrl, params["value"], key, secret)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -193,11 +194,21 @@ func SearchRelease(w http.ResponseWriter, req *http.Request) {
 	gresult := gjson.Get(bodyString, "results")
 	for _, result := range gresult.Array() {
 
+		var styles []string
+		for _, res := range result.Get("style").Array() {
+			styles = append(styles, res.Str)
+		}
+		if styles == nil {
+			styles = []string{}
+		}
+
 		releases = append(releases, models.Result{
 			Title:      result.Get("title").Str,
 			URI:        result.Get("uri").Str,
 			CoverImage: result.Get("thumb").Str,
 			ID:         int(result.Get("id").Num),
+			Year:       result.Get("year").Str,
+			Style:      styles,
 		})
 	}
 
@@ -246,9 +257,15 @@ func SearchArtist(w http.ResponseWriter, req *http.Request) {
 		log.Println(err)
 	}
 
+	var regex = regexp.MustCompile(`^.*?\([^\d]*(\d+)[^\d]*\).*$`)
+
 	var artists []models.Result
 	gresult := gjson.Get(bodyString, "results")
 	for _, result := range gresult.Array() {
+		if regex.MatchString(result.Get("title").Str) {
+			continue
+		}
+
 		artists = append(artists, models.Result{
 			ID:         int(result.Get("id").Num),
 			Title:      result.Get("title").Str,
