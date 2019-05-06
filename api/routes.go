@@ -13,18 +13,21 @@ import (
 	"regexp"
 )
 
-var baseUrl = "https://api.discogs.com"
-var key = "hkPZgJqVNACgrhiCUBEr"
-var secret = "GhhVfKpuGbRJhcktPLNctfTXpzKUvpKl"
+var baseUrl = "http://ws.audioscrobbler.com/2.0"
+var key = "f6b194e8e973a19daa39f08ee677c5f0"
+var secret = "b2204a511b7c2f8db6452ca4bb28dcda"
 
 /**
 Get given release by id
 */
+//TODO make transition for Last.fm!
 func GetRelease(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 
+	method := "album.getInfo"
+
 	fmt.Println(params["type"], ":", params["name"])
-	url := fmt.Sprintf("%s/releases/%s", baseUrl, params["id"])
+	url := fmt.Sprintf("%s/?method=%s/%s", baseUrl, method, params["id"])
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -162,10 +165,12 @@ func getArtistReleases(url string) (res []models.ReleaseMin) {
 /**
 Search for releases by value
 */
-func SearchRelease(w http.ResponseWriter, req *http.Request) {
+func SearchAlbum(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
+	method := "album.search"
 
-	url := fmt.Sprintf("%s/database/search?q=%s&type=master&key=%s&secret=%s", baseUrl, params["value"], key, secret)
+	url := fmt.Sprintf("%s/?method=%s&album=%s&api_key=%s&format=json", baseUrl, method, params["value"], key)
+	//url := fmt.Sprintf("%s/database/search?q=%s&type=master&key=%s&secret=%s", baseUrl, params["value"], key, secret)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
