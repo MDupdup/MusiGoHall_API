@@ -1,51 +1,42 @@
 package models
 
-type Artist struct {
-	Profile     string `json:"profile"`
-	Name        string `json:"name"`
-	Members     []Member
-	ReleasesMin []ReleaseMin
-	ID          int `json:"id"`
+type Image struct {
+	Url  string
+	Size string
 }
 
-type Member struct {
-	Active      bool   `json:"active"`
-	ResourceURL string `json:"resource_url"`
-	ID          int    `json:"id"`
-	Name        string `json:"name"`
-}
-
-type ReleaseMin struct {
-	Title       string
-	Thumb       string
-	Year        int
-	ResourceURL string
-	ID          int
-}
-
-type Release struct {
-	Title     string
-	Thumb     string
-	Year      int
-	DateAdded string
-	Country   string
-	Style     []string
-	TrackList []Track
-	ID        int
+type Tag struct {
+	Name string
+	Url  string
 }
 
 type Track struct {
-	Title    string
-	Type     string
+	Name     string
+	Url      string
 	Duration string
 	Position string
 }
 
-type Result struct {
-	Title      string `json:"title"`
-	URI        string `json:"uri"`
-	CoverImage string `json:"cover_image"`
-	ID         int    `json:"id"`
-	Year       string
-	Style      []string
+type Artist struct {
+	Name      string
+	Mbid      string
+	Url       string
+	PlayCount string
+	Images    []Image
+	IsOnTour  bool
+	Similar   []Artist
+	Summup    string
+	Content   string
+}
+
+type Album struct {
+	Name    string
+	Mbid    string
+	Artist  string
+	Url     string
+	Images  []Image
+	Tracks  []Track
+	Summup  string
+	Content string
+	Tags    []Tag
 }
