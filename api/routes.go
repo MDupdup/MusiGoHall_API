@@ -151,6 +151,7 @@ func GetArtist(w http.ResponseWriter, req *http.Request) {
 		Similar:   similarArtists,
 		Summup:    gresult.Get("summary").Str,
 		Content:   gresult.Get("content").Str,
+		Albums:    getArtistReleases(gresult.Get("name").Str),
 	}
 
 	err = json.NewEncoder(w).Encode(artist)
@@ -159,7 +160,10 @@ func GetArtist(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-/*func getArtistReleases(url string) (res []models.ReleaseMin) {
+func getArtistTags(artist string) (res []models.Tag) {
+	method := "artist.gettags"
+	url := fmt.Sprintf("%s/?method=%s&artist=%s&api_key=%s&format=json", baseUrl, method, artist, key)
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Fatal("NewRequest:", err)
@@ -175,23 +179,72 @@ func GetArtist(w http.ResponseWriter, req *http.Request) {
 
 	body, err := ioutil.ReadAll(resp.Body)
 	bodyString := string(body)
+	gresult := gjson.Parse(bodyString).Get("tags")
 
-	gresult := gjson.Get(bodyString, "releases")
+	albums := []models.Album{}
+
 	for _, result := range gresult.Array() {
 
-		if result.Get("role").Str == "Main" {
-			res = append(res, models.ReleaseMin{
-				Title:       result.Get("title").Str,
-				Thumb:       result.Get("thumb").Str,
-				Year:        int(result.Get("year").Num),
-				ResourceURL: result.Get("resource_url").Str,
-				ID:          int(result.Get("id").Num),
+		var images []models.Image
+		for _, iresult := range result.Get("image").Array() {
+			images = append(images, models.Image{
+				Url:  iresult.Get("#text").Str,
+				Size: iresult.Get("size").Str,
 			})
 		}
+
+		albums = append(albums, models.Album{
+			Name:   result.Get("name").Str,
+			Mbid:   result.Get("mbid").Str,
+			Url:    result.Get("url").Str,
+			Images: images,
+		})
+	}
+}
+
+func getArtistReleases(artist string) (res []models.Album) {
+	method := "artist.gettopalbums"
+	url := fmt.Sprintf("%s/?method=%s&artist=%s&api_key=%s&format=json", baseUrl, method, artist, key)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Fatal("NewRequest:", err)
 	}
 
-	return res
-}*/
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal("Do: ", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	bodyString := string(body)
+	gresult := gjson.Parse(bodyString).Get("topalbums")
+
+	albums := []models.Album{}
+
+	for _, result := range gresult.Array() {
+
+		var images []models.Image
+		for _, iresult := range result.Get("image").Array() {
+			images = append(images, models.Image{
+				Url:  iresult.Get("#text").Str,
+				Size: iresult.Get("size").Str,
+			})
+		}
+
+		albums = append(albums, models.Album{
+			Name:   result.Get("name").Str,
+			Mbid:   result.Get("mbid").Str,
+			Url:    result.Get("url").Str,
+			Images: images,
+		})
+	}
+
+	return albums
+}
 
 /**
 Search for releases by value
@@ -226,7 +279,7 @@ func SearchAlbum(w http.ResponseWriter, req *http.Request) {
 	for _, result := range gresult.Array() {
 
 		var images []models.Image
-		for _, iresult := range result.Get("style").Array() {
+		for _, iresult := range result.Get("image").Array() {
 			images = append(images, models.Image{
 				Url:  iresult.Get("#text").Str,
 				Size: iresult.Get("size").Str,

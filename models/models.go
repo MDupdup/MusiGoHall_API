@@ -27,6 +27,7 @@ type Artist struct {
 	Similar   []Artist
 	Summup    string
 	Content   string
+	Albums    []Album
 }
 
 type Album struct {
