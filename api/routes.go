@@ -17,7 +17,7 @@ var key = "f6b194e8e973a19daa39f08ee677c5f0"
 var secret = "b2204a511b7c2f8db6452ca4bb28dcda"
 
 /**
-Get given release by id
+Get given album by id
 */
 //TODO make transition for Last.fm!
 func GetAlbum(w http.ResponseWriter, req *http.Request) {
@@ -55,12 +55,9 @@ func GetAlbum(w http.ResponseWriter, req *http.Request) {
 		})
 	}
 
-	var tags []models.Tag
+	var tags []string
 	for _, result := range gresult.Get("tags").Get("tag").Array() {
-		tags = append(tags, models.Tag{
-			Name: result.Get("name").Str,
-			Url:  result.Get("url").Str,
-		})
+		tags = append(tags, result.Get("name").Str)
 	}
 
 	var images []models.Image
@@ -152,6 +149,7 @@ func GetArtist(w http.ResponseWriter, req *http.Request) {
 		Summup:    gresult.Get("summary").Str,
 		Content:   gresult.Get("content").Str,
 		Albums:    getArtistReleases(gresult.Get("name").Str),
+		Tags:      getArtistTags(gresult.Get("name").Str),
 	}
 
 	err = json.NewEncoder(w).Encode(artist)
@@ -160,9 +158,9 @@ func GetArtist(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func getArtistTags(artist string) (res []models.Tag) {
+func getArtistTags(artistId string) (res []string) {
 	method := "artist.gettags"
-	url := fmt.Sprintf("%s/?method=%s&artist=%s&api_key=%s&format=json", baseUrl, method, artist, key)
+	url := fmt.Sprintf("%s/?method=%s&artist=%s&api_key=%s&format=json", baseUrl, method, artistId, key)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -179,33 +177,23 @@ func getArtistTags(artist string) (res []models.Tag) {
 
 	body, err := ioutil.ReadAll(resp.Body)
 	bodyString := string(body)
-	gresult := gjson.Parse(bodyString).Get("tags")
+	gresult := gjson.Parse(bodyString).Get("tags").Get("tag")
 
-	albums := []models.Album{}
+	var tags []string
 
 	for _, result := range gresult.Array() {
-
-		var images []models.Image
-		for _, iresult := range result.Get("image").Array() {
-			images = append(images, models.Image{
-				Url:  iresult.Get("#text").Str,
-				Size: iresult.Get("size").Str,
-			})
-		}
-
-		albums = append(albums, models.Album{
-			Name:   result.Get("name").Str,
-			Mbid:   result.Get("mbid").Str,
-			Url:    result.Get("url").Str,
-			Images: images,
-		})
+		tags = append(tags, result.Get("name").Str)
 	}
+
+	return tags
 }
 
 func getArtistReleases(artist string) (res []models.Album) {
 	method := "artist.gettopalbums"
 	url := fmt.Sprintf("%s/?method=%s&artist=%s&api_key=%s&format=json", baseUrl, method, artist, key)
 
+	print(url)
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Fatal("NewRequest:", err)
@@ -221,7 +209,7 @@ func getArtistReleases(artist string) (res []models.Album) {
 
 	body, err := ioutil.ReadAll(resp.Body)
 	bodyString := string(body)
-	gresult := gjson.Parse(bodyString).Get("topalbums")
+	gresult := gjson.Parse(bodyString).Get("topalbums").Get("album")
 
 	albums := []models.Album{}
 

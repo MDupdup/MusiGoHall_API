@@ -5,11 +5,6 @@ type Image struct {
 	Size string
 }
 
-type Tag struct {
-	Name string
-	Url  string
-}
-
 type Track struct {
 	Name     string
 	Url      string
@@ -28,6 +23,7 @@ type Artist struct {
 	Summup    string
 	Content   string
 	Albums    []Album
+	Tags      []string
 }
 
 type Album struct {
@@ -39,5 +35,5 @@ type Album struct {
 	Tracks  []Track
 	Summup  string
 	Content string
-	Tags    []Tag
+	Tags    []string
 }
