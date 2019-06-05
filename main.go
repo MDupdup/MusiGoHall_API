@@ -19,5 +19,8 @@ func main() {
 	router.HandleFunc("/album/{id}", api.GetAlbum).Methods("GET")
 	router.HandleFunc("/artist/{id}", api.GetArtist).Methods("GET")
 
+	router.HandleFunc("/favorites/add", api.AddToDB).Methods("POST")
+	router.HandleFunc("/favorites/all", api.GetDB).Methods("GET")
+
 	log.Fatal(http.ListenAndServe(":3333", router))
 }

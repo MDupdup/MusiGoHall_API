@@ -353,3 +353,11 @@ func SearchArtist(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 }
+
+func AddToDB(w http.ResponseWriter, req *http.Request) {
+
+}
+
+func GetDB(w http.ResponseWriter, req *http.Request) {
+
+}
