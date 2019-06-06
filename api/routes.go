@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 var baseUrl = "http://ws.audioscrobbler.com/2.0"
@@ -47,10 +48,11 @@ func GetAlbum(w http.ResponseWriter, req *http.Request) {
 
 	var trackList []models.Track
 	for _, result := range gresult.Get("tracks").Get("track").Array() {
+		duration, _ := strconv.Atoi(result.Get("duration").Str)
 		trackList = append(trackList, models.Track{
 			Name:     result.Get("name").Str,
 			Url:      result.Get("url").Str,
-			Duration: result.Get("duration").Str,
+			Duration: duration,
 			Position: result.Get("@attr").Get("rank").Str,
 		})
 	}
@@ -355,9 +357,39 @@ func SearchArtist(w http.ResponseWriter, req *http.Request) {
 }
 
 func AddToDB(w http.ResponseWriter, req *http.Request) {
+	params := mux.Vars(req)
+
+	parameter, err := url.Parse(url.QueryEscape(params["type"]))
+	if err != nil {
+		log.Fatal("ParseError:", err)
+		panic(err)
+	}
+
+	fmt.Println(req.Body)
+
+	decoder := json.NewDecoder(req.Body)
+
+	if parameter.String() == "album" {
+		var album models.Album
+
+		err := decoder.Decode(&album)
+		if err != nil {
+			panic(err)
+		}
+		log.Println(album.Name)
+
+	} else if parameter.String() == "artist" {
+		var artist models.Artist
+
+		err := decoder.Decode(&artist)
+		if err != nil {
+			panic(err)
+		}
+		log.Println(artist.Name)
+	}
 
 }
 
 func GetDB(w http.ResponseWriter, req *http.Request) {
-
+	fmt.Printf("coucou")
 }

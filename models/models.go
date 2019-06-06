@@ -8,7 +8,7 @@ type Image struct {
 type Track struct {
 	Name     string
 	Url      string
-	Duration string
+	Duration int
 	Position string
 }
 
