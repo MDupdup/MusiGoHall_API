@@ -13,27 +13,27 @@ type Track struct {
 }
 
 type Artist struct {
-	Name      string
-	Mbid      string
-	Url       string
-	PlayCount string
-	Images    []Image
-	IsOnTour  bool
-	Similar   []Artist
-	Summup    string
-	Content   string
-	Albums    []Album
-	Tags      []string
+	Name      string   `bson:"Name"`
+	Mbid      string   `bson:"Mbid"`
+	Url       string   `bson:"Url"`
+	PlayCount string   `bson:"PlayCount"`
+	Images    []Image  `bson:"Images"`
+	IsOnTour  bool     `bson:"IsOnTour"`
+	Similar   []Artist `bson:"similar"`
+	Summup    string   `bson:"Summup"`
+	Content   string   `bson:"Content"`
+	Albums    []Album  `bson:"Albums"`
+	Tags      []string `bson:"Tags"`
 }
 
 type Album struct {
-	Name    string
-	Mbid    string
-	Artist  string
-	Url     string
-	Images  []Image
-	Tracks  []Track
-	Summup  string
-	Content string
-	Tags    []string
+	Name    string   `bson:"Name"`
+	Mbid    string   `bson:"Mbid"`
+	Artist  string   `bson:"Artist"`
+	Url     string   `bson:"Url"`
+	Images  []Image  `bson:"Images"`
+	Tracks  []Track  `bson:"Tracks"`
+	Summup  string   `bson:"Summup"`
+	Content string   `bson:"Content"`
+	Tags    []string `bson:"Tags"`
 }

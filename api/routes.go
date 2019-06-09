@@ -391,7 +391,7 @@ func AddToDB(w http.ResponseWriter, req *http.Request) {
 			panic(err)
 		}
 
-		db.Collection("albums").InsertOne(ctx, album)
+		_, _ = db.Collection("albums").InsertOne(ctx, album)
 
 	} else if parameter.String() == "artist" {
 		var artist models.Artist
@@ -402,7 +402,7 @@ func AddToDB(w http.ResponseWriter, req *http.Request) {
 		}
 		log.Println(artist.Name)
 
-		db.Collection("artist").InsertOne(ctx, artist)
+		_, _ = db.Collection("artist").InsertOne(ctx, artist)
 	}
 }
 
@@ -415,43 +415,96 @@ func GetDB(w http.ResponseWriter, req *http.Request) {
 		panic(err)
 	}
 
-	decoder := json.NewDecoder(req.Body)
-
 	ctx := context.Background()
 
 	client, err := mongo.NewClient(options.Client().ApplyURI("127.0.0.1:27017"))
 	if err != nil {
-		fmt.Errorf("todo: couldn't connect to mongo: %v", err)
+		_ = fmt.Errorf("todo: couldn't connect to mongo: %v", err)
 	}
 	err = client.Connect(ctx)
 	if err != nil {
-		fmt.Errorf("todo: mongo client couldn't connect with background context: %v", err)
+		_ = fmt.Errorf("todo: mongo client couldn't connect with background context: %v", err)
 	}
 	db := client.Database("musichall")
 
 	if parameter.String() == "album" {
-		var album models.Album
-
-		err := decoder.Decode(&album)
-		if err != nil {
-			panic(err)
-		}
 
 		c, err := db.Collection("albums").Find(ctx, bson.D{})
 		if err != nil {
-			fmt.Errorf("readTasks: couldn't list all to-dos: %v", err)
+			_ = fmt.Errorf("readTasks: couldn't list all albums: %v", err)
 		}
 		defer c.Close(ctx)
 
-	} else if parameter.String() == "artist" {
-		var artist models.Artist
+		var results []*models.Album
 
-		err := decoder.Decode(&artist)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
-		log.Println(artist.Name)
 
-		c, err := db.Collection("artist").Find(ctx, bson.D{})
+		// Finding multiple documents returns a cursor
+		// Iterating through the cursor allows us to decode documents one at a time
+		for c.Next(context.TODO()) {
+
+			// create a value into which the single document can be decoded
+			var elem models.Album
+			err := c.Decode(&elem)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			results = append(results, &elem)
+		}
+
+		if err := c.Err(); err != nil {
+			log.Fatal(err)
+		}
+
+		// Close the cursor once finished
+		c.Close(context.TODO())
+
+		err = json.NewEncoder(w).Encode(results)
+		if err != nil {
+			log.Fatal("jsonEncode:", err)
+			return
+		}
+
+	} else if parameter.String() == "artist" {
+
+		c, err := db.Collection("artists").Find(ctx, bson.D{})
+		if err != nil {
+			_ = fmt.Errorf("readTasks: couldn't list all artists: %v", err)
+		}
+		defer c.Close(ctx)
+
+		var results []*models.Artist
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for c.Next(context.TODO()) {
+
+			var elem models.Artist
+			err := c.Decode(&elem)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			results = append(results, &elem)
+		}
+
+		if err := c.Err(); err != nil {
+			log.Fatal(err)
+		}
+
+		// Close the cursor once finished
+		c.Close(context.TODO())
+
+		err = json.NewEncoder(w).Encode(results)
+		if err != nil {
+			log.Fatal("jsonEncode:", err)
+			return
+		}
+
 	}
 }
