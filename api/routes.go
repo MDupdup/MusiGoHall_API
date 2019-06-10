@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 var baseUrl = "http://ws.audioscrobbler.com/2.0"
@@ -30,8 +31,14 @@ func GetAlbum(w http.ResponseWriter, req *http.Request) {
 
 	method := "album.getInfo"
 
-	fmt.Println(params["type"], ":", params["name"])
-	url := fmt.Sprintf("%s/?method=%s&mbid=%s&api_key=%s&format=json", baseUrl, method, params["id"], key)
+	var url string
+	if len(params["id"]) == 36 && len(strings.Split(params["id"], "-")) == 5 {
+		url = fmt.Sprintf("%s/?method=%s&mbid=%s&api_key=%s&format=json", baseUrl, method, params["id"], key)
+	} else {
+		url = fmt.Sprintf("%s/?method=%s&album=%s&artist=%s&api_key=%s&format=json", baseUrl, method, params["id"], params["name"], key)
+	}
+
+	fmt.Println(url)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -101,7 +108,13 @@ func GetArtist(w http.ResponseWriter, req *http.Request) {
 	method := "artist.getInfo"
 
 	fmt.Println(params["type"], ":", params["name"])
-	url := fmt.Sprintf("%s/?method=%s&mbid=%s&api_key=%s&format=json", baseUrl, method, params["id"], key)
+
+	var url string
+	if len(params["id"]) == 36 && len(strings.Split(params["id"], "-")) == 5 {
+		url = fmt.Sprintf("%s/?method=%s&mbid=%s&api_key=%s&format=json", baseUrl, method, params["id"], key)
+	} else {
+		url = fmt.Sprintf("%s/?method=%s&artist=%s&api_key=%s&format=json", baseUrl, method, params["id"], key)
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -217,7 +230,7 @@ func getArtistReleases(artist string) (res []models.Album) {
 	bodyString := string(body)
 	gresult := gjson.Parse(bodyString).Get("topalbums").Get("album")
 
-	albums := []models.Album{}
+	var albums []models.Album
 
 	for _, result := range gresult.Array() {
 
@@ -402,7 +415,7 @@ func AddToDB(w http.ResponseWriter, req *http.Request) {
 		}
 		log.Println(artist.Name)
 
-		_, _ = db.Collection("artist").InsertOne(ctx, artist)
+		_, _ = db.Collection("artists").InsertOne(ctx, artist)
 	}
 }
 
@@ -507,4 +520,103 @@ func GetDB(w http.ResponseWriter, req *http.Request) {
 		}
 
 	}
+}
+
+func IsInDB(w http.ResponseWriter, req *http.Request) {
+	params := mux.Vars(req)
+
+	parameter, err := url.Parse(url.QueryEscape(params["type"]))
+	if err != nil {
+		log.Fatal("ParseError:", err)
+		panic(err)
+	}
+
+	ctx := context.Background()
+
+	client, err := mongo.NewClient(options.Client().ApplyURI("127.0.0.1:27017"))
+	if err != nil {
+		_ = fmt.Errorf("todo: couldn't connect to mongo: %v", err)
+	}
+	err = client.Connect(ctx)
+	if err != nil {
+		_ = fmt.Errorf("todo: mongo client couldn't connect with background context: %v", err)
+	}
+	db := client.Database("musichall")
+
+	if parameter.String() == "album" {
+
+		var album models.Album
+		err := db.Collection("albums").FindOne(ctx, bson.M{"Name": params["name"]}).Decode(&album)
+		if err != nil {
+			_ = fmt.Errorf("readTasks: couldn't get the album %v", err)
+		}
+
+		if album.Name != "" {
+			err = json.NewEncoder(w).Encode(true)
+			if err != nil {
+				log.Fatal("jsonEncode:", err)
+				return
+			}
+		} else {
+			err = json.NewEncoder(w).Encode(false)
+			if err != nil {
+				log.Fatal("jsonEncode:", err)
+				return
+			}
+		}
+	} else if parameter.String() == "artist" {
+
+		var artist models.Artist
+		err := db.Collection("artists").FindOne(ctx, bson.M{"Name": params["name"]}).Decode(&artist)
+		if err != nil {
+			_ = fmt.Errorf("readTasks: couldn't get the artist: %v", err)
+		}
+
+		if artist.Name != "" {
+			err = json.NewEncoder(w).Encode(true)
+			if err != nil {
+				log.Fatal("jsonEncode:", err)
+				return
+			}
+		} else {
+			err = json.NewEncoder(w).Encode(false)
+			if err != nil {
+				log.Fatal("jsonEncode:", err)
+				return
+			}
+		}
+	}
+}
+
+func DeleteFromDB(w http.ResponseWriter, req *http.Request) {
+	params := mux.Vars(req)
+
+	parameter, err := url.Parse(url.QueryEscape(params["type"]))
+	if err != nil {
+		log.Fatal("ParseError:", err)
+		panic(err)
+	}
+
+	ctx := context.Background()
+
+	client, err := mongo.NewClient(options.Client().ApplyURI("127.0.0.1:27017"))
+	if err != nil {
+		_ = fmt.Errorf("todo: couldn't connect to mongo: %v", err)
+	}
+	err = client.Connect(ctx)
+	if err != nil {
+		_ = fmt.Errorf("todo: mongo client couldn't connect with background context: %v", err)
+	}
+	db := client.Database("musichall")
+
+	fmt.Println(parameter.String() + "s")
+	fmt.Println("." + params["value"] + ".")
+
+	result, err := db.Collection(parameter.String()+"s").DeleteOne(ctx, bson.M{"Name": params["value"]})
+	if err != nil {
+		_ = fmt.Errorf("readTasks: couldn't get the artist: %v", err)
+	}
+
+	fmt.Println(result.DeletedCount)
+	return
 }
